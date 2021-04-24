@@ -1,0 +1,36 @@
+#cloud-config
+autoinstall:
+  version: 1
+  locale: en_GB
+  keyboard:
+    layout: gb
+  ssh:
+    install-server: true
+    allow-pw: true
+  packages:
+    - qemu-guest-agent
+  storage:
+    layout:
+      name: direct
+    swap:
+      size: 0
+  user-data:
+    package_upgrade: true
+    timezone: Europe/London
+    users:
+      - name: uadmin
+        passwd: $6$mwcxtg2tMrCmsGaa$wrrEIpi5CQEVV.Vaic/ozVDQn3LxlBzt4Soqu61qH7AetIsf2L3CulZxOEemGVrwP7.Emay1VpNJiPNf5BSaH.
+        groups: [adm, cdrom, dip, plugdev, lxd, sudo]
+        lock-passwd: false
+        sudo: ALL=(ALL) NOPASSWD:ALL
+        shell: /bin/bash
+        ssh_authorized_keys:
+          - ssh-ed25519 kLPrl6rRO$NTjTQx1nesw5JLjtiAVdn3UBSbahUBGDFSiGGfrMNfGBum5aFsTQcNX1S8 user@servers.local
+  early-commands:
+  # otherwise packer tries to connect and exceed max attempts:
+    - systemctl stop ssh      
+  late-commands:   
+    - sed -i 's|^root:.:|root:$6$mwcxtg2tMrCmsGaa$wrrEIpi5CQEVV.Vaic/ozVDQn3LxlBzt4Soqu61qH7AetIsf2L3CulZxOEemGVrwP7.Emay1VpNJiPNf5BSaH..:|' /target/etc/shadow
+    - curtin in-target --target=/target -- apt update           
+    - curtin in-target --target=/target -- apt upgrade -y
+    #- echo 'ubuntu ALL=(ALL) NOPASSWD:ALL' > /target/etc/sudoers.d/ubuntu
